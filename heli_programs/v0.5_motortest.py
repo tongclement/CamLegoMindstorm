@@ -37,8 +37,8 @@ motor_pitch.brake()
 # Start time
 t_start = time.perf_counter()
 # Stop time
-t_brake=30
-t_stop = t_start + 33
+t_brake=29.7
+t_stop = t_start + 29.7
 
 while time.perf_counter() < t_stop:
     position_readings.append(motor_rotor.get_position())
