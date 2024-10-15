@@ -14,17 +14,17 @@ from cued_ia_lego import *
 # fan speeds etc. Make sure the blades are horizontal before running.
 
 # Blade angles to test
-test_angles = [0, 10, 20, 30, 40, 50, 60, 70, 80]  # (degrees)
+test_angles = [0,10,20,30,40,50,60,70,80]  # (degrees)
 # Time to spin blades for each test
 test_duration = 10  # (seconds)
 # Time to record data, in this example between 50% and 90% of the way through
 # the test_duration
 recording_window = [0.5, 0.9]
 # Time to wait between tests
-inter_test_pause = 3  # (seconds)
+inter_test_pause = 5  # (seconds)
 # Power of the pitch changing motor, you may need to change the sign depending
 # on how your motor is mounted
-pitch_power = 40
+pitch_power = 30
 # Power of the fan (blade spinning) motor
 fan_power = 100
 
@@ -166,3 +166,13 @@ plt.grid()
 
 print('Close the plots to finish')
 plt.show()
+
+# Export speed vs pitch data to CSV
+with open('speed_vs_pitch_small_blade.csv', 'w') as f:
+    # Write the header
+    f.write('Pitch (deg),Motor Speed (deg/sec)\n')
+    # Write the data
+    for p, speed in zip(pitch, results[2]):
+        f.write(f'{p},{speed}\n')
+
+print('Data exported to speed_vs_pitch.csv')

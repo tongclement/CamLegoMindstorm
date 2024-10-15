@@ -19,7 +19,7 @@ motor_rotor.reset_position()
 # Set up pitch motor position
 motor_pitch = Motor(brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
 motor_pitch.reset_position()
-target_pitch_motor_absolute_angle = -400
+target_pitch_motor_absolute_angle = 0
 motor_pitch.turn_to(target_pitch_motor_absolute_angle)
 
 motor_rotor.run()
@@ -40,20 +40,22 @@ t_start = time.perf_counter()
 # Stop time
 t_brake = 29.7
 t_stop = t_start + 29.7
+motor_rotor.run(power=100)
 
-while time.perf_counter() < t_stop:
-    position_readings.append(motor_rotor.get_position())
-    times.append(time.perf_counter() - t_start)
-    if motor_armed and time.perf_counter() > t_brake:
-        motor_rotor.idle()
-        motor_armed = False
-
-    current_time_elapsed = time.perf_counter() - t_start
-    motor_rotor.run(power=int(current_time_elapsed / 5) * 20)
-    print(f"Time Elapse {current_time_elapsed}, Current Power Setting {int(current_time_elapsed / 5) * 20}")
-
+for x in range(0,10):
+    t_brake = x*10
+    t_stop = t_start + x*10
+    while time.perf_counter() < t_stop:
+        position_readings.append(motor_rotor.get_position())
+        times.append(time.perf_counter() - t_start)
+        current_time_elapsed = time.perf_counter() - t_start
+        # motor_rotor.run(power=int(current_time_elapsed / 5) * 20)
+        motor_pitch.turn_to(x * 90)
+        print(f"Time Elapse {current_time_elapsed}, Current Power Setting {int(current_time_elapsed / 5) * 20}")
+    print(f"test of motor angle pitch {x*90}")
 # Turn off the motor
 motor_rotor.idle()
+motor_armed = False
 
 # Calculate rotation speed
 d_positions = diff(position_readings)

@@ -14,7 +14,7 @@ except Exception:
 
 
 # Set up pitch motor position
-motor_pitch = Motor(brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
+motor_pitch = Motor(brick, PORT_B, power=50, speedreg=True, smoothstart=True, brake=True)
 motor_pitch.reset_position()
 
 pitches = {}
