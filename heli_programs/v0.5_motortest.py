@@ -18,7 +18,7 @@ motor_rotor.reset_position()
 # Set up pitch motor position
 motor_pitch = Motor(brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
 motor_pitch.reset_position()
-target_pitch_motor_absolute_angle = -400
+target_pitch_motor_absolute_angle = -500
 motor_pitch.turn_to(target_pitch_motor_absolute_angle)
 
 motor_rotor.run()

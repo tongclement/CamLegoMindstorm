@@ -24,7 +24,7 @@ recording_window = [0.5, 0.9]
 inter_test_pause = 3  # (seconds)
 # Power of the pitch changing motor, you may need to change the sign depending
 # on how your motor is mounted
-pitch_power = -40
+pitch_power = 40
 # Power of the fan (blade spinning) motor
 fan_power = 100
 
