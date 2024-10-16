@@ -21,6 +21,7 @@ DATA_DURATION = 60  # seconds to run the data collection
 
 class MotorController(BoxLayout):
     target_power = NumericProperty(100)  # Default target speed
+    target_pitch = NumericProperty(400)  # Default target speed
 
     def __init__(self, **kwargs):
         super(MotorController, self).__init__(**kwargs)
@@ -40,7 +41,7 @@ class MotorController(BoxLayout):
         # Set up pitch motor
         self.motor_pitch = Motor(self.brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
         self.motor_pitch.reset_position()
-        self.motor_pitch.turn_to(-400)
+        self.motor_pitch.turn_to(self.target_pitch)
 
         self.motor_rotor.run()
         self.motor_armed = True
@@ -69,14 +70,20 @@ class MotorController(BoxLayout):
         self.btn_increase = Button(text='Increase Speed')
         self.btn_decrease = Button(text='Decrease Speed')
         self.btn_stop = Button(text='Stop Motor')
+        self.btn_increasePitch = Button(text='Increase Pitch')
+        self.btn_decreasePitch = Button(text='Decrease Pitch}')
 
         self.btn_increase.bind(on_press=self.increase_speed)
         self.btn_decrease.bind(on_press=self.decrease_speed)
         self.btn_stop.bind(on_press=self.stop_motor)
+        self.btn_increasePitch.bind(on_press=self.increase_pitch)
+        self.btn_decreasePitch.bind(on_press=self.decrease_pitch)
 
         button_layout.add_widget(self.btn_increase)
         button_layout.add_widget(self.btn_decrease)
         button_layout.add_widget(self.btn_stop)
+        button_layout.add_widget(self.btn_increasePitch)
+        button_layout.add_widget(self.btn_decreasePitch)
 
         self.add_widget(button_layout)
 
@@ -147,6 +154,20 @@ class MotorController(BoxLayout):
             self.target_power = 0  # Minimum speed limit
         self.motor_rotor.run(power=self.target_power)
         print(f"Target speed decreased to {self.target_power}")
+
+    def increase_pitch(self, instance):
+        self.target_pitch += 100
+        if self.target_pitch > 900: #strictly larger than
+            self.target_pitch = 900  # Maximum speed limit
+        self.motor_pitch.turn_to(-self.target_pitch)
+        print(f"Target pitch increased to {self.target_pitch}")
+
+    def decrease_pitch(self, instance):
+        self.target_pitch -= 100
+        if self.target_pitch < 0:
+            self.target_pitch = 0  # Minimum speed limit
+        self.motor_pitch.turn_to(-self.target_pitch)
+        print(f"Target pitch decreased to {self.target_pitch}")
 
     def stop_motor(self, instance=None):
         if self.motor_armed:
