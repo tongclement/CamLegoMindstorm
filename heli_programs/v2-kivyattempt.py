@@ -20,7 +20,7 @@ SMOOTHING_FACTOR = 0.05
 DATA_DURATION = 60  # seconds to run the data collection
 
 class MotorController(BoxLayout):
-    target_speed = NumericProperty(100)  # Default target speed
+    target_power = NumericProperty(100)  # Default target speed
 
     def __init__(self, **kwargs):
         super(MotorController, self).__init__(**kwargs)
@@ -34,13 +34,13 @@ class MotorController(BoxLayout):
             exit()
 
         # Set up rotor motor
-        self.motor_rotor = Motor(self.brick, PORT_A, power=self.target_speed, speedreg=False, smoothstart=True, brake=False)
+        self.motor_rotor = Motor(self.brick, PORT_A, power=self.target_power, speedreg=False, smoothstart=True, brake=False)
         self.motor_rotor.reset_position()
 
         # Set up pitch motor
         self.motor_pitch = Motor(self.brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
         self.motor_pitch.reset_position()
-        self.motor_pitch.turn_to(0)
+        self.motor_pitch.turn_to(-400)
 
         self.motor_rotor.run()
         self.motor_armed = True
@@ -135,18 +135,18 @@ class MotorController(BoxLayout):
             self.plot.points = list(zip(self.times, self.speed_readings))
 
     def increase_speed(self, instance):
-        self.target_speed += 10
-        if self.target_speed > 200:
-            self.target_speed = 200  # Maximum speed limit
-        self.motor_rotor.set_power(self.target_speed)
-        print(f"Target speed increased to {self.target_speed}")
+        self.target_power += 10
+        if self.target_power > 100: #strictly larger than
+            self.target_power = 100  # Maximum speed limit
+        self.motor_rotor.run(power=self.target_power)
+        print(f"Target speed increased to {self.target_power}")
 
     def decrease_speed(self, instance):
-        self.target_speed -= 10
-        if self.target_speed < 0:
-            self.target_speed = 0  # Minimum speed limit
-        self.motor_rotor.set_power(self.target_speed)
-        print(f"Target speed decreased to {self.target_speed}")
+        self.target_power -= 10
+        if self.target_power < 0:
+            self.target_power = 0  # Minimum speed limit
+        self.motor_rotor.run(power=self.target_power)
+        print(f"Target speed decreased to {self.target_power}")
 
     def stop_motor(self, instance=None):
         if self.motor_armed:
