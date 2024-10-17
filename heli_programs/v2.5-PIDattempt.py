@@ -22,10 +22,10 @@ SMOOTHING_FACTOR = 0.05
 DATA_DURATION = 60  # seconds to run the data collection
 
 class MotorController(BoxLayout):
-    target_power = NumericProperty(80)  # Default target speed - 80% to make it more interesting 
-    target_pitch = NumericProperty(400)  # Default target speed
+    target_power = NumericProperty(100)  # Default target speed - 80% to make it more interesting
+    target_pitch = NumericProperty(200)  # Default target speed
 
-    target_light_sensor_reading = NumericProperty(400) #500 for lowest 250 for highest rotor - this is the target value for PID
+    target_light_sensor_reading = NumericProperty(500) #500 for lowest 250 for highest rotor - this is the target value for PID
 
     def __init__(self, **kwargs):
         super(MotorController, self).__init__(**kwargs)
@@ -45,7 +45,7 @@ class MotorController(BoxLayout):
         # Set up pitch motor
         self.motor_pitch = Motor(self.brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
         self.motor_pitch.reset_position()
-        self.motor_pitch.turn_to(self.target_pitch)
+        self.motor_pitch.turn_to(-self.target_pitch)
 
         self.motor_rotor.run()
         self.motor_armed = True
@@ -58,6 +58,7 @@ class MotorController(BoxLayout):
         self.position_readings = deque(maxlen=2000)
         self.speed_readings = deque(maxlen=2000)
         self.light_readings=deque(maxlen=2000)
+        self.target_light_readings = deque(maxlen=2000)
 
         # Set up Graph
         self.graph = Graph(
@@ -81,8 +82,10 @@ class MotorController(BoxLayout):
             padding=5, x_grid=True, y_grid=True, xmin=0, xmax=60, ymin=0, ymax=800
         )
 
-        self.plotLight = MeshLinePlot(color=[0, 1,0,1])
+        self.plotLight = MeshLinePlot(color=[0, 1,0,1]) #green
+        self.plotLightTarget = MeshLinePlot(color=[1, 0, 0, 1]) #red
         self.graphLight.add_plot(self.plotLight)    #to add to original graph, just do self.graph.add_lot(self.plotDIFFERENTNAME)
+        self.graphLight.add_plot(self.plotLightTarget)
 
         self.add_widget(self.graphLight)
 
@@ -157,12 +160,15 @@ class MotorController(BoxLayout):
             else:
                 self.light_readings.append(current_light_reading)
 
+            self.target_light_readings.append(self.target_light_sensor_reading)
+
             # Update target speed if needed
             # For example, you can implement pitch adjustments here
             #PID Adjustment 
             light_sensor_to_target_delta = (self.light_readings[-1]-self.target_light_sensor_reading)
-            self.target_pitch= light_sensor_to_target_delta*0.3 #say the actual reading is 450 and target is 300 (rotor needs to rise higher), then...
-            self.motor_pitch.turnto(-self.target_pitch)
+            self.target_pitch= self.target_pitch+light_sensor_to_target_delta*0.1 #say the actual reading is 450 and target is 300 (rotor needs to rise higher), then...
+            print(f"target pitch {-self.target_pitch}")
+            self.motor_pitch.turn_to(-self.target_pitch)
 
             
 
@@ -180,6 +186,7 @@ class MotorController(BoxLayout):
             self.plot.points = list(zip(self.times, self.speed_readings))
 
             self.plotLight.points = list(zip(self.times, self.light_readings))
+            self.plotLightTarget.points = list(zip(self.times, self.target_light_readings))
 
 
 
@@ -217,6 +224,8 @@ class MotorController(BoxLayout):
             self.motor_rotor.idle()
             self.motor_armed = False
             print("Motor stopped.")
+            self.target_pitch=0
+            self.motor_pitch.turn_to(-self.target_pitch)
         self.running = False
 
     def on_stop(self):
