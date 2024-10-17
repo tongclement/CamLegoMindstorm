@@ -22,10 +22,10 @@ SMOOTHING_FACTOR = 0.05
 DATA_DURATION = 60  # seconds to run the data collection
 
 class MotorController(BoxLayout):
-    target_power = NumericProperty(100)  # Default target speed
+    target_power = NumericProperty(80)  # Default target speed - 80% to make it more interesting 
     target_pitch = NumericProperty(400)  # Default target speed
 
-    target_light_sensor_reading = NumericProperty(400) #500 for lowest 250 for highest rotor
+    target_light_sensor_reading = NumericProperty(400) #500 for lowest 250 for highest rotor - this is the target value for PID
 
     def __init__(self, **kwargs):
         super(MotorController, self).__init__(**kwargs)
@@ -118,7 +118,7 @@ class MotorController(BoxLayout):
         # Schedule Graph Update
         Clock.schedule_interval(self.update_graph, 1.0 / 30.0)  # 30 FPS
 
-    def collect_data(self): #async running
+    def collect_data(self): #async running - once every 33ms
         t_start = self.start_time
         while self.running and (time.perf_counter() - t_start) < DATA_DURATION:
             current_time = time.perf_counter() - t_start
@@ -157,9 +157,14 @@ class MotorController(BoxLayout):
             else:
                 self.light_readings.append(current_light_reading)
 
-
             # Update target speed if needed
             # For example, you can implement pitch adjustments here
+            #PID Adjustment 
+            light_sensor_to_target_delta = (self.light_readings[-1]-self.target_light_sensor_reading)
+            self.target_pitch= light_sensor_to_target_delta*0.3 #say the actual reading is 450 and target is 300 (rotor needs to rise higher), then...
+            self.motor_pitch.turnto(-self.target_pitch)
+
+            
 
             time.sleep(0.1)  # Adjust the sampling rate as needed
 
