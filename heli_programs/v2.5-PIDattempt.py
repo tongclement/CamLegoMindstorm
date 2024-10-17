@@ -25,6 +25,8 @@ class MotorController(BoxLayout):
     target_power = NumericProperty(100)  # Default target speed
     target_pitch = NumericProperty(400)  # Default target speed
 
+    target_light_sensor_reading = NumericProperty(400) #500 for lowest 250 for highest rotor
+
     def __init__(self, **kwargs):
         super(MotorController, self).__init__(**kwargs)
         self.orientation = 'vertical'
