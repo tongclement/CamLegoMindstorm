@@ -168,7 +168,7 @@ print('Close the plots to finish')
 plt.show()
 
 # Export speed vs pitch data to CSV
-with open('speed_vs_pitch_small_blade.csv', 'w') as f:
+with open('oct18-speed_vs_pitch_small_blade.csv', 'w') as f:
     # Write the header
     f.write('Pitch (deg),Motor Speed (deg/sec)\n')
     # Write the data
