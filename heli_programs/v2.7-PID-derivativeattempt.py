@@ -27,7 +27,7 @@ class MotorController(BoxLayout):
     target_power = NumericProperty(100)  # Default target speed - 80% to make it more interesting
     target_pitch = NumericProperty(200)  # Default target speed
 
-    target_light_sensor_reading = NumericProperty(450) #500 for lowest 250 for highest rotor - this is the target value for PID
+    target_light_sensor_reading = NumericProperty(430) #500 for lowest 250 for highest rotor - this is the target value for PID
 
     def __init__(self, **kwargs):
         super(MotorController, self).__init__(**kwargs)
@@ -95,8 +95,8 @@ class MotorController(BoxLayout):
         # Set up Buttons
         button_layout = BoxLayout(size_hint_y=0.2)
 
-        self.btn_increase = Button(text='Increase Speed')
-        self.btn_decrease = Button(text='Decrease Speed')
+        self.btn_increase = Button(text='Increase Target Hover Altitude')
+        self.btn_decrease = Button(text='Decrease Target Hover Altitude')
         self.btn_stop = Button(text='Stop Motor')
         self.btn_increasePitch = Button(text='Increase Pitch')
         self.btn_decreasePitch = Button(text='Decrease Pitch}')

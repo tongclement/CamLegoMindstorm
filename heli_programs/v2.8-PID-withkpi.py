@@ -11,6 +11,7 @@ from kivy_garden.graph import Graph, MeshLinePlot
 from kivy.uix.button import Button
 from kivy.clock import Clock
 from kivy.properties import NumericProperty
+from kivy.uix.label import Label
 
 import matplotlib.pyplot as plt  # If you still want to use matplotlib
 from cued_ia_lego import *  # Assuming this is your proprietary library
@@ -18,8 +19,13 @@ from cued_ia_lego import *  # Assuming this is your proprietary library
 #from heli_programs.calibrate_lift import light_readings
 
 # Constants
-SMOOTHING_FACTOR = 0.05
+SMOOTHING_FACTOR = 0.65
 DATA_DURATION = 60  # seconds to run the data collection
+proportional = 0.05
+derivative = 0.15
+
+
+
 
 class MotorController(BoxLayout):
     target_power = NumericProperty(100)  # Default target speed - 80% to make it more interesting
@@ -28,6 +34,7 @@ class MotorController(BoxLayout):
     target_light_sensor_reading = NumericProperty(430) #500 for lowest 250 for highest rotor - this is the target value for PID
 
     def __init__(self, **kwargs):
+
         super(MotorController, self).__init__(**kwargs)
         self.orientation = 'vertical'
 
@@ -42,13 +49,7 @@ class MotorController(BoxLayout):
         self.motor_rotor = Motor(self.brick, PORT_A, power=self.target_power, speedreg=False, smoothstart=True, brake=False)
         self.motor_rotor.reset_position()
 
-        # Set up pitch motor
-        self.motor_pitch = Motor(self.brick, PORT_B, power=40, speedreg=True, smoothstart=True, brake=True)
-        self.motor_pitch.reset_position()
-        self.motor_pitch.turn_to(-self.target_pitch)
 
-        self.motor_rotor.run()
-        self.motor_armed = True
 
         # Light sensor connected to sensor port 1, LED active
         self.light = Light(self.brick, PORT_1, illuminated=True)
@@ -84,17 +85,49 @@ class MotorController(BoxLayout):
         )
 
         self.plotLight = MeshLinePlot(color=[0, 1,0,1]) #green
-        self.plotLightTarget = MeshLinePlot(color=[1, 0, 0, 1]) #red
+        self.plotLightTarget = MeshLinePlot(color=[0, 1, 1, 1]) #red
         self.graphLight.add_plot(self.plotLight)    #to add to original graph, just do self.graph.add_lot(self.plotDIFFERENTNAME)
         self.graphLight.add_plot(self.plotLightTarget)
 
         self.add_widget(self.graphLight)
 
+        """
+            Initializes the KPI row with labels.
+            """
+        # Create a horizontal BoxLayout for KPIs
+        kpi_layout = BoxLayout(orientation='horizontal', size_hint_y=0.1, padding=10, spacing=20)
+
+        # KPI: Current Motor Speed
+        self.lbl_motor_speed_title = Label(text='        Motor Power (%):', halign='right', valign='middle', size_hint_x=0.5,font_size=20)
+        self.lbl_motor_speed = Label(text=str(self.target_power), halign='left', valign='middle', size_hint_x=0.5, font_size=20)
+        #lbl_motor_speed.bind(text=self.setter('self.target_power'))
+
+        # KPI: Light Sensor Reading
+        self.lbl_light_sensor_title = Label(text='Target Light Sensor Reading (Height):', halign='right', valign='middle', size_hint_x=0.5, font_size=20)
+        self.lbl_light_sensor = Label(text=str(self.target_light_sensor_reading), halign='left', valign='middle', size_hint_x=0.5, font_size=20)
+        #lbl_light_sensor.bind(text=self.setter('self.target_light_sensor_reading'))
+
+        # Add more KPIs as needed
+        # Example: Temperature Sensor
+        # lbl_temp_sensor_title = Label(text='Temperature:', halign='left', valign='middle', size_hint_x=0.3)
+        # lbl_temp_sensor = Label(text=self.temperature_reading, halign='left', valign='middle', size_hint_x=0.3)
+        # lbl_temp_sensor.bind(text=self.setter('temperature_reading'))
+
+        # Add widgets to KPI layout
+        kpi_layout.add_widget(self.lbl_motor_speed_title)
+        kpi_layout.add_widget(self.lbl_motor_speed)
+        kpi_layout.add_widget(self.lbl_light_sensor_title)
+        kpi_layout.add_widget(self.lbl_light_sensor)
+        # kpi_layout.add_widget(lbl_temp_sensor_title)
+        # kpi_layout.add_widget(lbl_temp_sensor)
+
+        self.add_widget(kpi_layout)
+
         # Set up Buttons
         button_layout = BoxLayout(size_hint_y=0.2)
 
-        self.btn_increase = Button(text='Increase Speed')
-        self.btn_decrease = Button(text='Decrease Speed')
+        self.btn_increase = Button(text='Increase Target Hover Altitude')
+        self.btn_decrease = Button(text='Decrease Target Hover Altitude')
         self.btn_stop = Button(text='Stop Motor')
         self.btn_increasePitch = Button(text='Increase Pitch')
         self.btn_decreasePitch = Button(text='Decrease Pitch}')
@@ -113,11 +146,22 @@ class MotorController(BoxLayout):
 
         self.add_widget(button_layout)
 
+        time.sleep(3)
+
+        self.motor_rotor.run()
+        self.motor_armed = True
+
+        # Set up pitch motor
+        self.motor_pitch = Motor(self.brick, PORT_B, power=35, speedreg=True, smoothstart=True, brake=True)
+        self.motor_pitch.reset_position()
+        self.motor_pitch.turn_to(-self.target_pitch)
+
         # Start Data Collection Thread
         self.running = True
         self.start_time = time.perf_counter()
         self.data_thread = threading.Thread(target=self.collect_data)
         self.data_thread.start()
+
 
         # Schedule Graph Update
         Clock.schedule_interval(self.update_graph, 1.0 / 30.0)  # 30 FPS
@@ -167,12 +211,20 @@ class MotorController(BoxLayout):
             # For example, you can implement pitch adjustments here
             #PID Adjustment 
             light_sensor_to_target_delta = (self.light_readings[-1]-self.target_light_sensor_reading)
-            self.target_pitch= self.target_pitch+light_sensor_to_target_delta*0.15 #say the actual reading is 450 and target is 300 (rotor needs to rise higher), then...
-            print(f"target pitch {-self.target_pitch}")
+            self.target_pitch= self.target_pitch+light_sensor_to_target_delta*proportional #say the actual reading is 450 and target is 300 (rotor needs to rise higher), then...
+            #guard the target pitch from a limit of 0 to 900
+            if self.target_pitch>600:
+                self.target_pitch=600
+            if self.target_pitch<0:
+                self.target_pitch=0
+            print(f"target pitch {self.target_pitch}")
             self.motor_pitch.turn_to(-self.target_pitch)
 
             self.target_pitch_records.append(self.target_pitch)
+            print(f"target pitch records {self.target_pitch_records}")
 
+            self.lbl_motor_speed.text = str(self.target_power)
+            self.lbl_light_sensor.text= str(self.target_light_sensor_reading)
             
 
             time.sleep(0.1)  # Adjust the sampling rate as needed
@@ -194,19 +246,21 @@ class MotorController(BoxLayout):
 
 
 
-    def increase_speed(self, instance):
-        self.target_power += 10
-        if self.target_power > 100: #strictly larger than
-            self.target_power = 100  # Maximum speed limit
-        self.motor_rotor.run(power=self.target_power)
-        print(f"Target speed increased to {self.target_power}")
+    def increase_speed(self, instance): #adapted to be increase target height now
+        #self.target_power += 10
+        #if self.target_power > 100: #strictly larger than
+            #self.target_power = 100  # Maximum speed limit
+        #self.motor_rotor.run(power=self.target_power)
+        self.target_light_sensor_reading-=20
+        print(f"Target hover height increased to {self.target_light_sensor_reading} (light sensor reading)")
 
     def decrease_speed(self, instance):
-        self.target_power -= 10
-        if self.target_power < 0:
-            self.target_power = 0  # Minimum speed limit
-        self.motor_rotor.run(power=self.target_power)
-        print(f"Target speed decreased to {self.target_power}")
+        self.target_light_sensor_reading += 20
+        #self.target_power -= 10
+        #if self.target_power < 0:
+        #    self.target_power = 0  # Minimum speed limit
+        #self.motor_rotor.run(power=self.target_power)
+        print(f"Target speed decreased to {self.target_light_sensor_reading} (light sensor reading)")
 
     def increase_pitch(self, instance):
         self.target_pitch += 100
