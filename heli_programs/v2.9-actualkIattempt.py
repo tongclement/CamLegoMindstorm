@@ -22,7 +22,7 @@ from statistics import mean
 SMOOTHING_FACTOR = 0.65
 DATA_DURATION = 60  # seconds to run the data collection
 proportional = 0.025
-derivative = 0.01
+derivative = 0.013
 #working gains - 0.025,0.01
 
 
@@ -30,9 +30,9 @@ derivative = 0.01
 
 class MotorController(BoxLayout):
     target_power = NumericProperty(100)  # Default target speed - 80% to make it more interesting
-    target_pitch = NumericProperty(0)  # Default target speed
+    target_pitch = NumericProperty(100)  # Default target speed
 
-    target_light_sensor_reading = NumericProperty(430) #500 for lowest 250 for highest rotor - this is the target value for PID
+    target_light_sensor_reading = NumericProperty(410) #500 for lowest 250 for highest rotor - this is the target value for PID
 
     def __init__(self, **kwargs):
 
@@ -214,7 +214,7 @@ class MotorController(BoxLayout):
             vertical_speeds = []
             mean_vs=0
             if len(self.times)>=5:
-                for vs_trials in range(0,4):
+                for vs_trials in range(0,2):
                     # if ascending, the speed should be negative
                     vertical_displacement = self.light_readings[-1-vs_trials] - self.light_readings[-2-vs_trials]
                     time_between_samples = self.times[-1-vs_trials] - self.times[-2-vs_trials]
